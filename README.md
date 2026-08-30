@@ -2,21 +2,13 @@
 
 一个基于 **PySide6** 的图形界面，用于操作 [blind_watermark](https://github.com/guofei9987/blind_watermark) 库，提供便捷的图片/文字水印嵌入、提取与批量处理。
 
-## 功能
+## 功能详情
 
 - **嵌入文字水印**：把一段文字作为不可见水印嵌入原图
 - **嵌入图片水印**：把一张图片作为不可见水印嵌入原图
 - **批量处理**：对一个文件夹内的多张图片批量嵌入同一图片水印
 - **提取水印**：从已嵌入水印的图片中还原出文字或图片水印
-- **设置**：自定义默认输出文件夹，关闭软件后会自动保存
-
-## 界面预览
-
-![嵌入文字水印](images/screenshot_1.png)
-![嵌入图片水印](images/screenshot_2.png)
-![批量处理](images/screenshot_3.png)
-![提取水印](images/screenshot_4.png)
-![设置](images/screenshot_5.png)
+- **设置**：自定义默认输出文件夹，关闭软件后会自动记住
 
 ## 目录结构
 
@@ -91,7 +83,7 @@ powershell -ExecutionPolicy Bypass -File build_exe.ps1
 
 ## 注意事项
 
-- 嵌入水印时请确保原图尺寸足以容纳水印信息（容量不足会给出提示，而不是崩溃）。
+- 嵌入水印时请确保原图尺寸足以容纳水印信息（容量不足会给出提示，不会崩溃）。
 - 图片路径支持中文，已针对 Windows 下 OpenCV 无法读取非 ASCII 路径的问题做了兼容处理。
 
 ## 许可证
