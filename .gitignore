@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.eggs/
+venv/
+.venv/
+env/
+
+# PyInstaller 构建产物
+build/
+dist/
+*.spec
+!ui_watermark.spec   # 保留打包配置（体积优化）
+
+# 测试/临时文件
+*.log
+error.log
+probe_err.txt
+probe_out.txt
+state_check.txt
+test_output.txt
+build_log.txt
+
+# 运行时生成的图片临时文件
+repro_*.png
+rt_*.png
+simple_*.png
+small_*.png
+src_text.png
+text_out.png
+tmp_*.png
+test_*.py
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
