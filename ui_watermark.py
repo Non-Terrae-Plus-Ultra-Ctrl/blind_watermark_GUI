@@ -1,57 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-PySide6 GUI for blind-watermark
---------------------------------
-This script provides a simple graphical user interface (GUI) built with
-PySide6 (Qt for Python) that wraps the `blind_watermark` library.
-It supports the following operations:
+"""隐形水印 GUI：基于 PySide6 + blind_watermark 的图片/文字水印工具。
 
-1. **嵌入图片水印** – 选择原图和水印图片，生成带水印的图片。
-2. **嵌入文字水印** – 直接输入文字作为水印进行嵌入。
-3. **提取水印** – 从已嵌入的图片中提取出图片或文字水印。
-4. **批量处理** – 对多个图片一次性执行嵌入（图片或文字）
-   并按照自定义的命名规则保存结果。
-
-输出文件的命名规则示例：
-```
-{序号}-{password_img}-{password_wm}-{水印位数}.{扩展名}
-```
-其中:
-- `序号` 为处理的递增编号（单文件嵌入固定为 1，批量处理从 1 开始递增）。
-- `password_img` 为用户在界面中填写的图片密码（整数）。
-- `password_wm` 为用户在界面中填写的水印密码（整数）。
-- `水印位数` 为水印的 bit 数，图片水印时自动计算，文字水印时为
-  `len(文字 UTF-8 字节) * 8`。
-- `扩展名` 依据原图文件保持不变（如 png、jpg）。
-
-例如：`1-1-1-40.png` 表示序号 1、password_img 1、password_wm 1、水印 40 bit。
-
-打包说明
---------
-使用 PyInstaller 将本程序打包为单文件 exe（Windows）
-```bat
-pip install pyinstaller PySide6 blind-watermark
-pyinstaller --onefile --noconsole ui_watermark.py
-```
-生成的 exe 位于 `dist\\ui_watermark.exe`，即可直接分发。
-
-依赖
-----
-- Python >= 3.7
-- PySide6
-- blind-watermark (项目已包含源码，可直接 `pip install .` 在源码根目录下)
-
-运行方式
---------
-```bash
-python ui_watermark.py
-```
-或双击已打包的 `ui_watermark.exe`。
+功能：嵌入图片水印、嵌入文字水印、批量处理、提取水印、设置。
+运行：python ui_watermark.py
+打包：见 README.md（PyInstaller + Inno Setup）。
 """
 
-import os
 import sys
-import types
 import traceback
 from pathlib import Path
 
@@ -167,20 +122,10 @@ class WatermarkApp(QWidget):
         layout = QFormLayout()
 
         self.embed_img_src = QLineEdit()
-        btn_src = QPushButton("浏览")
-        btn_src.clicked.connect(lambda: self._browse_file(self.embed_img_src))
-        src_layout = QHBoxLayout()
-        src_layout.addWidget(self.embed_img_src)
-        src_layout.addWidget(btn_src)
-        layout.addRow("原图文件:", src_layout)
+        layout.addRow(*self._file_row(self.embed_img_src, "原图文件:"))
 
         self.embed_img_wm = QLineEdit()
-        btn_wm = QPushButton("浏览")
-        btn_wm.clicked.connect(lambda: self._browse_file(self.embed_img_wm))
-        wm_layout = QHBoxLayout()
-        wm_layout.addWidget(self.embed_img_wm)
-        wm_layout.addWidget(btn_wm)
-        layout.addRow("水印图片:", wm_layout)
+        layout.addRow(*self._file_row(self.embed_img_wm, "水印图片:"))
 
         self.embed_img_pwd = QLineEdit()
         self.embed_img_pwd.setPlaceholderText("仅支持整数")
@@ -191,12 +136,7 @@ class WatermarkApp(QWidget):
         layout.addRow("密码wm：", self.embed_img_pwd_wm)
 
         self.embed_img_out = QLineEdit(self._default_out_dir)
-        btn_out = QPushButton("浏览文件夹")
-        btn_out.clicked.connect(lambda: self._browse_folder(self.embed_img_out))
-        out_layout = QHBoxLayout()
-        out_layout.addWidget(self.embed_img_out)
-        out_layout.addWidget(btn_out)
-        layout.addRow("输出文件夹:", out_layout)
+        layout.addRow(*self._file_row(self.embed_img_out, "输出文件夹:", folder=True))
 
         self.embed_img_btn = QPushButton("开始嵌入")
         self.embed_img_btn.clicked.connect(self._run_embed_image)
@@ -217,12 +157,7 @@ class WatermarkApp(QWidget):
         layout = QFormLayout()
 
         self.embed_txt_src = QLineEdit()
-        btn_src = QPushButton("浏览")
-        btn_src.clicked.connect(lambda: self._browse_file(self.embed_txt_src))
-        src_layout = QHBoxLayout()
-        src_layout.addWidget(self.embed_txt_src)
-        src_layout.addWidget(btn_src)
-        layout.addRow("原图文件:", src_layout)
+        layout.addRow(*self._file_row(self.embed_txt_src, "原图文件:"))
 
         self.embed_txt_content = QTextEdit()
         self.embed_txt_content.setPlaceholderText("请输入文本")
@@ -237,12 +172,7 @@ class WatermarkApp(QWidget):
         layout.addRow("密码wm：", self.embed_txt_pwd_wm)
 
         self.embed_txt_out = QLineEdit(self._default_out_dir)
-        btn_out = QPushButton("浏览文件夹")
-        btn_out.clicked.connect(lambda: self._browse_folder(self.embed_txt_out))
-        out_layout = QHBoxLayout()
-        out_layout.addWidget(self.embed_txt_out)
-        out_layout.addWidget(btn_out)
-        layout.addRow("输出文件夹:", out_layout)
+        layout.addRow(*self._file_row(self.embed_txt_out, "输出文件夹:", folder=True))
 
         self.embed_txt_btn = QPushButton("开始嵌入文字水印")
         self.embed_txt_btn.clicked.connect(self._run_embed_text)
@@ -263,12 +193,7 @@ class WatermarkApp(QWidget):
         layout = QFormLayout()
 
         self.extract_src = QLineEdit()
-        btn_src = QPushButton("浏览")
-        btn_src.clicked.connect(lambda: self._browse_file(self.extract_src))
-        src_layout = QHBoxLayout()
-        src_layout.addWidget(self.extract_src)
-        src_layout.addWidget(btn_src)
-        layout.addRow("嵌入后图片:", src_layout)
+        layout.addRow(*self._file_row(self.extract_src, "嵌入后图片:"))
 
         self.extract_pwd_img = QLineEdit()
         self.extract_pwd_img.setPlaceholderText("仅支持整数")
@@ -307,20 +232,10 @@ class WatermarkApp(QWidget):
         layout = QFormLayout()
 
         self.batch_src_dir = QLineEdit()
-        btn_src = QPushButton("浏览文件夹")
-        btn_src.clicked.connect(lambda: self._browse_folder(self.batch_src_dir))
-        src_layout = QHBoxLayout()
-        src_layout.addWidget(self.batch_src_dir)
-        src_layout.addWidget(btn_src)
-        layout.addRow("原图片文件夹:", src_layout)
+        layout.addRow(*self._file_row(self.batch_src_dir, "原图片文件夹:", folder=True))
 
         self.batch_wm_img = QLineEdit()
-        btn_wm = QPushButton("浏览")
-        btn_wm.clicked.connect(lambda: self._browse_file(self.batch_wm_img))
-        wm_layout = QHBoxLayout()
-        wm_layout.addWidget(self.batch_wm_img)
-        wm_layout.addWidget(btn_wm)
-        layout.addRow("水印图片:", wm_layout)
+        layout.addRow(*self._file_row(self.batch_wm_img, "水印图片:"))
 
         self.batch_pwd_img = QLineEdit()
         self.batch_pwd_img.setPlaceholderText("仅支持整数")
@@ -331,12 +246,7 @@ class WatermarkApp(QWidget):
         layout.addRow("密码wm：", self.batch_pwd_wm)
 
         self.batch_out_dir = QLineEdit(self._default_out_dir)
-        btn_out = QPushButton("浏览文件夹")
-        btn_out.clicked.connect(lambda: self._browse_folder(self.batch_out_dir))
-        out_layout = QHBoxLayout()
-        out_layout.addWidget(self.batch_out_dir)
-        out_layout.addWidget(btn_out)
-        layout.addRow("输出文件夹:", out_layout)
+        layout.addRow(*self._file_row(self.batch_out_dir, "输出文件夹:", folder=True))
 
         self.batch_btn = QPushButton("开始批量嵌入")
         self.batch_btn.clicked.connect(self._run_batch)
@@ -362,6 +272,19 @@ class WatermarkApp(QWidget):
         if folder:
             line_edit.setText(folder)
 
+    def _file_row(self, line_edit: QLineEdit, label: str, folder: bool = False):
+        """构建「标签 + 输入框 + 浏览器」一行，返回可让 addRow 使用的组件。
+
+        folder=True 时用文件夹选择器，否则用文件选择器。
+        """
+        btn = QPushButton("浏览文件夹" if folder else "浏览")
+        handler = self._browse_folder if folder else self._browse_file
+        btn.clicked.connect(lambda: handler(line_edit))
+        row = QHBoxLayout()
+        row.addWidget(line_edit)
+        row.addWidget(btn)
+        return label, row
+
     # ---------------------------------------------------------------------
     # Tab: 设置
     # ---------------------------------------------------------------------
@@ -370,12 +293,7 @@ class WatermarkApp(QWidget):
         layout = QFormLayout()
 
         self.settings_out = QLineEdit(self._default_out_dir)
-        btn_out = QPushButton("浏览")
-        btn_out.clicked.connect(lambda: self._browse_folder(self.settings_out))
-        out_layout = QHBoxLayout()
-        out_layout.addWidget(self.settings_out)
-        out_layout.addWidget(btn_out)
-        layout.addRow("默认输出文件夹:", out_layout)
+        layout.addRow(*self._file_row(self.settings_out, "默认输出文件夹:", folder=True))
 
         hint = QLabel("设置后嵌入水印的输出文件夹默认使用该路径。")
         hint.setWordWrap(True)
@@ -442,6 +360,12 @@ class WatermarkApp(QWidget):
             QMessageBox.warning(self, "文件错误", f"无法读取图片：\n{path}\n\n{e}")
             return None
 
+    @staticmethod
+    def _capacity(img):
+        """返回图片可容纳的水印位数（与 blind_watermark 分块逻辑保持一致）。"""
+        h, w = img.shape[:2]
+        return ((h + 1) // 2 // 4) * ((w + 1) // 2 // 4)
+
     def _start_worker(self, func, log_widget, *args):
         """启动一个后台线程执行水印操作。
 
@@ -452,7 +376,7 @@ class WatermarkApp(QWidget):
         """
         thread = WorkerThread(func, *args)
         self._active_threads.append(thread)
-        thread.result.connect(lambda msg: self._handle_finished(msg, log_widget))
+        thread.result.connect(lambda msg: log_widget.append(msg))
         thread.error.connect(lambda e: log_widget.append(f"错误: {e}"))
         # 用内置 finished 信号做清理（run() 返回后才发出），线程对象让 Qt 延迟销毁
         thread.finished.connect(lambda t=thread: self._on_thread_done(t))
@@ -502,14 +426,9 @@ class WatermarkApp(QWidget):
         if src_img is None or wm_img is None:
             QMessageBox.warning(self, "文件错误", "无法读取原图或水印图片，请检查路径。")
             return
-        # 计算可嵌入的位数（与 blind_watermark 的内部逻辑保持一致）
-        img_h, img_w = src_img.shape[:2]
-        ca_h = (img_h + 1) // 2
-        ca_w = (img_w + 1) // 2
-        block_num = (ca_h // 4) * (ca_w // 4)
-        wm_bits = (wm_img[:, :, 0] > 128).sum()
-        if wm_bits > block_num:
-            QMessageBox.warning(self, "水印太大", f"当前水印位数 {wm_bits} 超过可嵌入容量 {block_num}，请使用更小的水印或更大的原图。")
+        wm_bits = int((wm_img[:, :, 0] > 128).sum())
+        if wm_bits > self._capacity(src_img):
+            QMessageBox.warning(self, "水印太大", f"当前水印位数 {wm_bits} 超过可嵌入容量 {self._capacity(src_img)}，请使用更小的水印或更大的原图。")
             return
 
         self.embed_img_log.append("开始嵌入图片水印…")
@@ -546,13 +465,9 @@ class WatermarkApp(QWidget):
         src_img = self._read_image_or_none(src)
         if src_img is None:
             return
-        img_h, img_w = src_img.shape[:2]
-        ca_h = (img_h + 1) // 2
-        ca_w = (img_w + 1) // 2
-        block_num = (ca_h // 4) * (ca_w // 4)
         text_bits = len(text.encode('utf-8')) * 8
-        if text_bits > block_num:
-            QMessageBox.warning(self, "文字水印太大", f"当前文字位数 {text_bits} 超过可嵌入容量 {block_num}，请使用更短的文字或更大的原图。")
+        if text_bits > self._capacity(src_img):
+            QMessageBox.warning(self, "文字水印太大", f"当前文字位数 {text_bits} 超过可嵌入容量 {self._capacity(src_img)}，请使用更短的文字或更大的原图。")
             return
 
         self.embed_txt_log.append("开始嵌入文字水印…")
@@ -659,20 +574,11 @@ class WatermarkApp(QWidget):
         self._active_threads.clear()
         event.accept()
 
-    def _handle_finished(self, msg: str, log_widget: QTextEdit):
-        """统一处理任务完成的回调。
-
-        - 将消息写入对应的日志部件。
-        - 如果用户勾选了 ``self.shutdown_checkbox``，在日志写入后立即调用系统关机。
-        """
-        log_widget.append(msg)
-        # 已移除自动关机功能，不再执行关机操作
-
 
 def main():
-    # 使用 Fusion 风格并设置暗色调配色
     app = QApplication(sys.argv)
-    # 全局兜底：任何未捕获异常以弹窗形式呈现，避免静默闪退
+
+    # 全局兜底：未捕获异常以弹窗呈现，避免静默闪退
     def _excepthook(exc_type, exc, tb):
         txt = "".join(traceback.format_exception(exc_type, exc, tb))
         try:
@@ -680,10 +586,9 @@ def main():
         except Exception:
             sys.stderr.write(txt)
     sys.excepthook = _excepthook
-    # 设置 Fusion 样式以便更好地支持暗色主题
+
+    # Fusion 风格 + 暗色调
     app.setStyle("Fusion")
-    # 创建暗色调调色板
-    from PySide6.QtGui import QPalette, QColor
     dark_palette = QPalette()
     dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
     dark_palette.setColor(QPalette.WindowText, Qt.white)

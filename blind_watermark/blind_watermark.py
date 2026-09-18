@@ -6,7 +6,7 @@
 import numpy as np
 import cv2
 
-from .bwm_core import WaterMarkCore
+from .bwm_core import WaterMarkCore, imread_unicode, imwrite_unicode
 
 
 class WaterMark:
@@ -20,10 +20,9 @@ class WaterMark:
         self.bwm_core.read_img(filename=filename)
 
     def read_img_wm(self, filename):
-        from .bwm_core import imread_unicode
         wm = imread_unicode(filename)
         if wm is None:
-            raise IOError("file '{filename}' not read".format(filename=filename))
+            raise IOError(f"file '{filename}' not read")
 
         # 读入图片格式的水印，并转为一维 bit 格式
         self.wm = wm[:, :, 0]
@@ -69,7 +68,6 @@ class WaterMark:
 
         # 转化为指定格式：
         if mode == 'img':
-            from .bwm_core import imwrite_unicode
             imwrite_unicode(out_wm_name, (255 * wm.reshape(wm_shape[0], wm_shape[1])).astype('uint8'))
         elif mode == 'str':
             # 将提取到的二进制位串安全地转为 UTF‑8 字符串

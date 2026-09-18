@@ -212,11 +212,3 @@ def random_strategy1(seed, size, block_shape):
     return np.random.RandomState(seed) \
         .random(size=(size, block_shape)) \
         .argsort(axis=1)
-
-
-def random_strategy2(seed, size, block_shape):
-    one_line = np.random.RandomState(seed) \
-        .random(size=(1, block_shape)) \
-        .argsort(axis=1)
-
-    return np.repeat(one_line, repeats=size, axis=0)
